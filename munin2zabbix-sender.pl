@@ -70,7 +70,8 @@ GetOptions(
         &DEBUG("$munin_run_command $plugin");
 
         if ($DO_OPERATION) {
-            unless ( open( FN, "> $lockdir/$plugin" ) ) {
+            my $temp_file = "$lockdir/$plugin";
+            unless ( open( FN, "> $temp_file" ) ) {
                 print STDERR "failed open a file($lockdir/$plugin)\n";
                 next;
             }
@@ -85,10 +86,11 @@ GetOptions(
                 my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
                 print FN "$zabbix_key $value\n";
             }
+            close(FN);
             my $result
                 = `$zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/$plugin`;
             &DEBUG("result $result");
-            close(FN);
+            unlink($temp_file);
         }
         else {
             &DEBUG(
