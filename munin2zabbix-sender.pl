@@ -84,7 +84,7 @@ GetOptions(
                 &DEBUG("munin  $line");
                 my ( $munin_key,  $value ) = split( /\s/, $line );
                 my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
-                print FN "$zabbix_key $value\n";
+                print FN "- munin[$plugin,$zabbix_key] $value\n";
             }
             close(FN);
             my $result
