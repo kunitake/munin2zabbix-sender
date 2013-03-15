@@ -21,6 +21,11 @@ if (! -d $temp_dir) {
   mkdir($temp_dir, 0755);
 }
 
+# Path of Command and plugins dir.
+my $munin_run_command = '/usr/sbin/munin-run';
+my $munin_plugins_dir = '/etc/munin/plugins';
+my $zabbix_sender_command = '/usr/bin/zabbix_sender';
+
 ######################################################################
 my ($dryrun, $help, $selfcheck, $DEBUG);
 
@@ -87,4 +92,27 @@ sub usage {
     print STDERR "\t[-s|--selfcheck] Chec this environment for working.\n";
     print STDERR "\t[-h|--help] Print this message\n";
     print STDERR "\t[-v|--verbose] Print verbose messages\n\n";
+}
+
+sub do_selfcheck {
+    print "\n";
+    print "Check path of commands and munin-plugin's directory...\n";
+
+    if (-e $zabbix_sender_command) {
+	print "[*]zabbix_sender\t... found\n";
+    } else {
+	print "[ ]zabbix_sender\t... not found($zabbix_sender_command)\n";
+    }
+
+    if (-e  $munin_run_command) {
+	print "[*]munin_run\t... found\n";
+    } else {
+	print "[ ]munin_run\t... not found($munin_run_command)\n";
+    }
+    if (-d $munin_plugins_dir) {
+	print "[*]munin_plugins_dir\t... found\n";
+    } else {
+	print "[ ]munin_plugins_dir\t... not found($munin_plugins_dir)\n";
+    }
+    print "\n";
 }
