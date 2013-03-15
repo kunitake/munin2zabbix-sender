@@ -101,7 +101,7 @@ sub usage {
     print STDERR "munin2zabbix-sender $version->[0]\n";
     print STDERR "\n";
     print STDERR "\t[-d|--dryrun] DO NOTHING\n";
-    print STDERR "\t[-s|--selfcheck] Chec this environment for working.\n";
+    print STDERR "\t[-s|--selfcheck] Check this environment for working.\n";
     print STDERR "\t[-p|--plugin] <name of munin plugin>\n";
     print STDERR "\t[-h|--help] Print this message\n";
     print STDERR "\t[-v|--verbose] Print verbose messages\n\n";
