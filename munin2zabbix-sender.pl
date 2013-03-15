@@ -48,7 +48,7 @@ GetOptions(
         &do_selfcheck();
         exit;
     }
-    if ( $help || (!$called_plugin && !$all_plugins)) {
+    if ( $help || ( !$called_plugin && !$all_plugins ) ) {
         die &usage();
     }
     if ($dryrun) {
@@ -79,7 +79,7 @@ GetOptions(
             my @results = `$munin_run_command $plugin`;
 
             foreach my $line (@results) {
-		chomp($line);
+                chomp($line);
                 &DEBUG("munin  $line");
                 my ( $munin_key,  $value ) = split( /\s/, $line );
                 my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
