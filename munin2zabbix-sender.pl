@@ -78,19 +78,26 @@ GetOptions(
             flock( FN, 2 );
 
             my @results = `$munin_run_command $plugin`;
+            if ( $? == 0 ) {
 
-            foreach my $line (@results) {
-                chomp($line);
-                &DEBUG("munin  $line");
-                my ( $munin_key,  $value ) = split( /\s/, $line );
-                my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
-                print FN "- munin[$plugin,$zabbix_key] $value\n";
+                # success
+                foreach my $line (@results) {
+                    chomp($line);
+                    &DEBUG("munin  $line");
+                    my ( $munin_key,  $value ) = split( /\s/, $line );
+                    my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
+                    print FN "- munin[$plugin,$zabbix_key] $value\n";
+                }
+                close(FN);
+                my $result
+                    = `$zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/$plugin`;
+                &DEBUG("result $result");
+                unlink($temp_file);
             }
-            close(FN);
-            my $result
-                = `$zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/$plugin`;
-            &DEBUG("result $result");
-            unlink($temp_file);
+            else {
+                # fail..
+                &DEBUG("Failed to $munin_run_command $plugin");
+            }
         }
         else {
             &DEBUG(
