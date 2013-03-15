@@ -28,7 +28,7 @@ my $zabbix_sender_command = '/usr/bin/zabbix_sender';
 my $zabbix_agentd_conf    = ' /etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
-my ($dryrun, $help, $selfcheck, $plugin, $verbose, $all_plugins);
+my ($dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins);
 
 GetOptions(
     'dryrun' => \$dryrun,
@@ -63,17 +63,42 @@ GetOptions(
     }
 
     foreach my $plugin (@munin_plugins) {
+
         &DEBUG("DO $munin_run_command $plugin");
+
         my @results = `$munin_run_command $plugin` if $DO_OPERATION;
+
+        my $by_file = 1;
+        unless ( open( FN, "> $lockdir/$plugin" ) ) {
+            print STDERR "failed open a file($lockdir/$plugin)\n";
+
+            #&do_unlock($lockdir) if $DO_OPERATION;
+            #exit;
+            $by_file = 0;
+        }
+        flock( FN, 2 ) if $by_file;
         foreach my $line (@results) {
             &DEBUG("munin  $line\n");
             my ( $munin_key,  $value ) = split( /\s/, $line );
             my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
             &DEBUG("zabbix $zabbix_key $value");
+
+            if ($by_file) {
+                print FN "$zabbix_key $value\n";
+            }
+            else {
+                my $result
+                    = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`
+                    if $DO_OPERATION;
+                &DEBUG("result $result");
+            }
+        }
+        if ($by_file) {
             my $result
-                = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`
+                = `$zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/$plugin`
                 if $DO_OPERATION;
             &DEBUG("result $result");
+            close(FN);
         }
     }
     &do_unlock($lockdir) if $DO_OPERATION;
