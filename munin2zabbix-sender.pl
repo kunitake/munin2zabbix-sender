@@ -12,7 +12,7 @@ my $version = [
                'version 0.01 alpha   2013/03/15',
                ];
 
-my $DO_AUTO_OPERATION = 0;
+my $DO_OPERATION = 0;
 
 my $temp_dir = '/tmp/munin2zabbix-sender';
 
@@ -48,7 +48,7 @@ GetOptions(
         exit;
     }
     if ($dryrun) {
-        $DO_AUTO_OPERATION = 0;
+        $DO_OPERATION = 0;
     }
 
     my $lockdir = &do_lock();
