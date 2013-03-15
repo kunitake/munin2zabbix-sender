@@ -28,13 +28,13 @@ my $zabbix_sender_command = '/usr/bin/zabbix_sender';
 my $zabbix_agentd_conf    = ' /etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
-my ($dryrun, $help, $selfcheck, $plugin, $DEBUG);
+my ($dryrun, $help, $selfcheck, $plugin, $verbose);
 
 GetOptions(
     'dryrun' => \$dryrun,
     'selfcheck' => \$selfcheck,
     'help' => \$help,
-    'verbose' => \$DEBUG,
+    'verbose' => \$verbose,
     'plugin=s' => \$plugin,
     );
 
@@ -53,17 +53,17 @@ GetOptions(
 
     my $lockdir = &do_lock() if $DO_OPERATION;
 
-    print "DEBUG:DO $munin_run_command $plugin\n" if $DEBUG;
+    &DEBUG("DO $munin_run_command $plugin");
     my @results = `$munin_run_command $plugin` if $DO_OPERATION;
     foreach my $line (@results) {
-        print "DEBUG:munin  $line\n" if $DEBUG;
+        &DEBUG("munin  $line\n");
         my ( $munin_key,  $value ) = split( /\s/, $line );
         my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
-        print "DEBUG:zabbix $zabbix_key $value\n" if $DEBUG;
+        &DEBUG("zabbix $zabbix_key $value");
         my $result
             = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`
             if $DO_OPERATION;
-        print "DEBUG:result $result\n" if $DEBUG;
+        &DEBUG("result $result");
     }
     &do_unlock($lockdir) if $DO_OPERATION;
     exit;
@@ -139,4 +139,9 @@ sub do_selfcheck {
         print "[ ]munin_plugins_dir\t... not found($munin_plugins_dir)\n";
     }
     print "\n";
+}
+
+sub DEBUG {
+    my $message = shift;
+    print "DEBUG:$message\n" if $verbose;
 }
