@@ -59,7 +59,7 @@ GetOptions(
         my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
         print "DEBUG:zabbix $zabbix_key $value\n" if $DEBUG;
         my $result
-            = `zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k $zabbix_key -o $value`;
+            = `$zabbix_sender_command -c /etc/zabbix/zabbix_agentd.conf -k $zabbix_key -o $value`;
         print "DEBUG:result $result\n" if $DEBUG;
     }
     &do_unlock($lockdir);
