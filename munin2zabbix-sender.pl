@@ -25,6 +25,7 @@ if (! -d $temp_dir) {
 my $munin_run_command = '/usr/sbin/munin-run';
 my $munin_plugins_dir = '/etc/munin/plugins';
 my $zabbix_sender_command = '/usr/bin/zabbix_sender';
+my $zabbix_agentd_conf    = ' /etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
 my ($dryrun, $help, $selfcheck, $plugin, $DEBUG);
@@ -59,7 +60,7 @@ GetOptions(
         my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
         print "DEBUG:zabbix $zabbix_key $value\n" if $DEBUG;
         my $result
-            = `$zabbix_sender_command -c /etc/zabbix/zabbix_agentd.conf -k $zabbix_key -o $value`;
+            = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`;
         print "DEBUG:result $result\n" if $DEBUG;
     }
     &do_unlock($lockdir);
@@ -70,24 +71,24 @@ sub do_lock {
     my $lockdir  = "$temp_dir/lock1";
     my $lockdir2 = "$temp_dir/locl2";
 
-    # retry count; 
+    # retry count;
     my $retry = 5;
 
     # lock function.
     # cf. http://homepage1.nifty.com/glass/tom_neko/web/web_04.html
-    while (!mkdir($lockdir, 0755)) {
-	if (--$retry <= 0) {
-	    if (mkdir($lockdir2, 0755)) {
-		if ((-M $lockdir) * 86400 > 600) {
-		    rename($lockdir2, $lockdir) or &error("LOCK ERROR");
-		    last;
-		}
-		else { rmdir($lockdir2); } #部分ロックの解除
-		print STDERR "already working...\n";
-		exit;
-	    }
-	}
-	sleep(1);
+    while ( !mkdir( $lockdir, 0755 ) ) {
+        if ( --$retry <= 0 ) {
+            if ( mkdir( $lockdir2, 0755 ) ) {
+                if ( ( -M $lockdir ) * 86400 > 600 ) {
+                    rename( $lockdir2, $lockdir ) or &error("LOCK ERROR");
+                    last;
+                }
+                else { rmdir($lockdir2); }
+                print STDERR "already working...\n";
+                exit;
+            }
+        }
+        sleep(1);
     }
     return $lockdir;
 }
@@ -111,21 +112,29 @@ sub do_selfcheck {
     print "\n";
     print "Check path of commands and munin-plugin's directory...\n";
 
-    if (-e $zabbix_sender_command) {
-	print "[*]zabbix_sender\t... found\n";
-    } else {
-	print "[ ]zabbix_sender\t... not found($zabbix_sender_command)\n";
+    if ( -e $zabbix_sender_command ) {
+        print "[*]zabbix_sender\t... found\n";
     }
-
-    if (-e  $munin_run_command) {
-	print "[*]munin_run\t... found\n";
-    } else {
-	print "[ ]munin_run\t... not found($munin_run_command)\n";
+    else {
+        print "[ ]zabbix_sender\t... not found($zabbix_sender_command)\n";
     }
-    if (-d $munin_plugins_dir) {
-	print "[*]munin_plugins_dir\t... found\n";
-    } else {
-	print "[ ]munin_plugins_dir\t... not found($munin_plugins_dir)\n";
+    if ( -e $zabbix_agentd_conf ) {
+        print "[*]zabbix_agentd.conf\t... found\n";
+    }
+    else {
+        print "[ ]zabbix_agentd.conf\t... not found($zabbix_agentd_conf)\n";
+    }
+    if ( -e $munin_run_command ) {
+        print "[*]munin_run\t... found\n";
+    }
+    else {
+        print "[ ]munin_run\t... not found($munin_run_command)\n";
+    }
+    if ( -d $munin_plugins_dir ) {
+        print "[*]munin_plugins_dir\t... found\n";
+    }
+    else {
+        print "[ ]munin_plugins_dir\t... not found($munin_plugins_dir)\n";
     }
     print "\n";
 }
