@@ -27,18 +27,19 @@ my $munin_plugins_dir = '/etc/munin/plugins';
 my $zabbix_sender_command = '/usr/bin/zabbix_sender';
 
 ######################################################################
-my ($dryrun, $help, $selfcheck, $DEBUG);
+my ($dryrun, $help, $selfcheck, $plugin, $DEBUG);
 
 GetOptions(
     'dryrun' => \$dryrun,
     'selfcheck' => \$selfcheck,
     'help' => \$help,
     'verbose' => \$DEBUG,
+    'plugin' => \$plugin,
     );
 
 {
     # Main Routine
-    if ($help) {
+    if ($help || !$plugin) {
 	die &usage();
     }
     if ($selfcheck) {
@@ -51,7 +52,17 @@ GetOptions(
 
     my $lockdir = &do_lock();
 
+    my @results = `$munin_run_command $plugin`;
+    foreach my $line (@results) {
+	print "DEBUG:munin  $line\n" if $DEBUG;
+        my ($munin_key, $value) = split(/\s/, $line);
+        my ($zabbix_key , $dummy) = split(/\./, $munin_key);
+        print "DEBUG:zabbix $zabbix_key $value\n" if $DEBUG;
+        my $result = `zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k $zabbix_key -o $value`;
+        print "DEBUG:result $result\n" if $DEBUG;
+    }
     &do_unlock($lockdir);
+    exit;
 }
 
 sub do_lock {
@@ -90,6 +101,7 @@ sub usage {
     print STDERR "\n";
     print STDERR "\t[-d|--dryrun] DO NOTHING\n";
     print STDERR "\t[-s|--selfcheck] Chec this environment for working.\n";
+    print STDERR "\t[-p|--plugin] <name of munin plugin>\n";
     print STDERR "\t[-h|--help] Print this message\n";
     print STDERR "\t[-v|--verbose] Print verbose messages\n\n";
 }
