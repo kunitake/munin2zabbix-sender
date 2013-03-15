@@ -48,7 +48,7 @@ GetOptions(
         &do_selfcheck();
         exit;
     }
-    if ( $help || !$called_plugin ) {
+    if ( $help || (!$called_plugin && !$all_plugins)) {
         die &usage();
     }
     if ($dryrun) {
