@@ -39,26 +39,27 @@ GetOptions(
 
 {
     # Main Routine
-    if ($help || !$plugin) {
-	die &usage();
+    if ( $help || !$plugin ) {
+        die &usage();
     }
     if ($selfcheck) {
-	&do_selfcheck();
-	exit;
+        &do_selfcheck();
+        exit;
     }
     if ($dryrun) {
-	$DO_AUTO_OPERATION = 0;
+        $DO_AUTO_OPERATION = 0;
     }
 
     my $lockdir = &do_lock();
 
     my @results = `$munin_run_command $plugin`;
     foreach my $line (@results) {
-	print "DEBUG:munin  $line\n" if $DEBUG;
-        my ($munin_key, $value) = split(/\s/, $line);
-        my ($zabbix_key , $dummy) = split(/\./, $munin_key);
+        print "DEBUG:munin  $line\n" if $DEBUG;
+        my ( $munin_key,  $value ) = split( /\s/, $line );
+        my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
         print "DEBUG:zabbix $zabbix_key $value\n" if $DEBUG;
-        my $result = `zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k $zabbix_key -o $value`;
+        my $result
+            = `zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k $zabbix_key -o $value`;
         print "DEBUG:result $result\n" if $DEBUG;
     }
     &do_unlock($lockdir);
