@@ -12,7 +12,7 @@ my $version = [
                'version 0.01 alpha   2013/03/15',
                ];
 
-my $DO_OPERATION = 0;
+my $DO_OPERATION = 1;
 
 my $temp_dir = '/tmp/munin2zabbix-sender';
 
@@ -20,6 +20,9 @@ my $temp_dir = '/tmp/munin2zabbix-sender';
 if (! -d $temp_dir) {
   mkdir($temp_dir, 0755);
 }
+
+my $lockdir  = "$temp_dir/lock1";
+my $lockdir2 = "$temp_dir/locl2";
 
 # Path of Command and plugins dir.
 my $munin_run_command = '/usr/sbin/munin-run';
@@ -52,7 +55,7 @@ GetOptions(
         $DO_OPERATION = 0;
     }
 
-    my $lockdir = &do_lock() if $DO_OPERATION;
+    &do_lock() if $DO_OPERATION;
 
     my @munin_plugins;
     if ($all_plugins) {
@@ -101,13 +104,11 @@ GetOptions(
             close(FN);
         }
     }
-    &do_unlock($lockdir) if $DO_OPERATION;
+    &do_unlock() if $DO_OPERATION;
     exit;
 }
 
 sub do_lock {
-    my $lockdir  = "$temp_dir/lock1";
-    my $lockdir2 = "$temp_dir/locl2";
 
     # retry count;
     my $retry = 5;
@@ -128,7 +129,6 @@ sub do_lock {
         }
         sleep(1);
     }
-    return $lockdir;
 }
 
 sub do_unlock {
