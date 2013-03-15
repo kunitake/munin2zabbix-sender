@@ -41,12 +41,12 @@ GetOptions(
 
 {
     # Main Routine
-    if ( $help || !$called_plugin ) {
-        die &usage();
-    }
     if ($selfcheck) {
         &do_selfcheck();
         exit;
+    }
+    if ( $help || !$called_plugin ) {
+        die &usage();
     }
     if ($dryrun) {
         $DO_OPERATION = 0;
