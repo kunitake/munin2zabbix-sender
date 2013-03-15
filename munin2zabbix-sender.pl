@@ -145,3 +145,9 @@ sub DEBUG {
     my $message = shift;
     print "DEBUG:$message\n" if $verbose;
 }
+
+sub error {
+    my $message = shift;
+    print STDERR "error: $message\n";
+    exit;
+}
