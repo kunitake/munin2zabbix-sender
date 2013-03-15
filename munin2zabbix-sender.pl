@@ -163,10 +163,10 @@ sub do_selfcheck {
         print "[ ]zabbix_agentd.conf\t... not found($zabbix_agentd_conf)\n";
     }
     if ( -e $munin_run_command ) {
-        print "[*]munin_run\t... found\n";
+        print "[*]munin_run\t\t... found\n";
     }
     else {
-        print "[ ]munin_run\t... not found($munin_run_command)\n";
+        print "[ ]munin_run\t\t... not found($munin_run_command)\n";
     }
     if ( -d $munin_plugins_dir ) {
         print "[*]munin_plugins_dir\t... found\n";
