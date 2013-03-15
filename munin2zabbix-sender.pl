@@ -80,7 +80,7 @@ GetOptions(
 
             foreach my $line (@results) {
 		chomp($line);
-                &DEBUG("munin  $line\n");
+                &DEBUG("munin  $line");
                 my ( $munin_key,  $value ) = split( /\s/, $line );
                 my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
                 print FN "$zabbix_key $value\n";
