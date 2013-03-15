@@ -28,19 +28,20 @@ my $zabbix_sender_command = '/usr/bin/zabbix_sender';
 my $zabbix_agentd_conf    = ' /etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
-my ($dryrun, $help, $selfcheck, $plugin, $verbose);
+my ($dryrun, $help, $selfcheck, $plugin, $verbose, $all_plugins);
 
 GetOptions(
     'dryrun' => \$dryrun,
     'selfcheck' => \$selfcheck,
     'help' => \$help,
     'verbose' => \$verbose,
-    'plugin=s' => \$plugin,
+    'plugin=s' => \$called_plugin,
+    'all' => \$all_plugins,
     );
 
 {
     # Main Routine
-    if ( $help || !$plugin ) {
+    if ( $help || !$called_plugin ) {
         die &usage();
     }
     if ($selfcheck) {
@@ -53,17 +54,27 @@ GetOptions(
 
     my $lockdir = &do_lock() if $DO_OPERATION;
 
-    &DEBUG("DO $munin_run_command $plugin");
-    my @results = `$munin_run_command $plugin` if $DO_OPERATION;
-    foreach my $line (@results) {
-        &DEBUG("munin  $line\n");
-        my ( $munin_key,  $value ) = split( /\s/, $line );
-        my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
-        &DEBUG("zabbix $zabbix_key $value");
-        my $result
-            = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`
-            if $DO_OPERATION;
-        &DEBUG("result $result");
+    my @munin_plugins;
+    if ($all_plugins) {
+        @munin_plugins = `ls $munin_plugins_dir`;
+    }
+    else {
+        push( @munin_plugins, $called_plugin );
+    }
+
+    foreach my $plugin (@munin_plugins) {
+        &DEBUG("DO $munin_run_command $plugin");
+        my @results = `$munin_run_command $plugin` if $DO_OPERATION;
+        foreach my $line (@results) {
+            &DEBUG("munin  $line\n");
+            my ( $munin_key,  $value ) = split( /\s/, $line );
+            my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
+            &DEBUG("zabbix $zabbix_key $value");
+            my $result
+                = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`
+                if $DO_OPERATION;
+            &DEBUG("result $result");
+        }
     }
     &do_unlock($lockdir) if $DO_OPERATION;
     exit;
