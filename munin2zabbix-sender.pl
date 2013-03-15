@@ -25,7 +25,7 @@ if (! -d $temp_dir) {
 my $munin_run_command = '/usr/sbin/munin-run';
 my $munin_plugins_dir = '/etc/munin/plugins';
 my $zabbix_sender_command = '/usr/bin/zabbix_sender';
-my $zabbix_agentd_conf    = ' /etc/zabbix/zabbix_agentd.conf';
+my $zabbix_agentd_conf    = '/etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
 my ($dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins);
