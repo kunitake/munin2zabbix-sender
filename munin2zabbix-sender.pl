@@ -35,7 +35,7 @@ GetOptions(
     'selfcheck' => \$selfcheck,
     'help' => \$help,
     'verbose' => \$DEBUG,
-    'plugin' => \$plugin,
+    'plugin=s' => \$plugin,
     );
 
 {
@@ -51,19 +51,21 @@ GetOptions(
         $DO_OPERATION = 0;
     }
 
-    my $lockdir = &do_lock();
+    my $lockdir = &do_lock() if $DO_OPERATION;
 
-    my @results = `$munin_run_command $plugin`;
+    print "DEBUG:DO $munin_run_command $plugin\n" if $DEBUG;
+    my @results = `$munin_run_command $plugin` if $DO_OPERATION;
     foreach my $line (@results) {
         print "DEBUG:munin  $line\n" if $DEBUG;
         my ( $munin_key,  $value ) = split( /\s/, $line );
         my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
         print "DEBUG:zabbix $zabbix_key $value\n" if $DEBUG;
         my $result
-            = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`;
+            = `$zabbix_sender_command -c $zabbix_agentd_conf -k $zabbix_key -o $value`
+            if $DO_OPERATION;
         print "DEBUG:result $result\n" if $DEBUG;
     }
-    &do_unlock($lockdir);
+    &do_unlock($lockdir) if $DO_OPERATION;
     exit;
 }
 
