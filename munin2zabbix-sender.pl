@@ -79,6 +79,7 @@ GetOptions(
             my @results = `$munin_run_command $plugin`;
 
             foreach my $line (@results) {
+		chomp($line);
                 &DEBUG("munin  $line\n");
                 my ( $munin_key,  $value ) = split( /\s/, $line );
                 my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
@@ -123,7 +124,6 @@ sub do_lock {
 }
 
 sub do_unlock {
-    my $lockdir = shift;
     rmdir($lockdir);
 }
 
