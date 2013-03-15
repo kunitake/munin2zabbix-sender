@@ -9,6 +9,7 @@ use Getopt::Long;
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+               'version 0.02 beta    2013/03/15',
                'version 0.01 alpha   2013/03/15',
                ];
 
