@@ -9,6 +9,7 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+               'version 0.03 beta    2013/03/22',
                'version 0.02 beta    2013/03/15',
                'version 0.01 alpha   2013/03/15',
                ];
@@ -16,11 +17,6 @@ my $version = [
 my $DO_OPERATION = 1;
 
 my $temp_dir = '/tmp/munin2zabbix-sender';
-
-# This directory includes lock dir and temp data file for zabbix_sender.
-if (! -d $temp_dir) {
-  mkdir($temp_dir, 0755);
-}
 
 my $lockdir  = "$temp_dir/lock1";
 my $lockdir2 = "$temp_dir/locl2";
@@ -56,7 +52,14 @@ GetOptions(
         $DO_OPERATION = 0;
     }
 
-    &do_lock() if $DO_OPERATION;
+    if ($DO_OPERATION) {
+
+      # This directory includes lock dir and temp data file for zabbix_sender.
+        if ( !-d $temp_dir ) {
+            mkdir( $temp_dir, 0755 );
+        }
+        &do_lock();
+    }
 
     my @munin_plugins;
     if ($all_plugins) {
