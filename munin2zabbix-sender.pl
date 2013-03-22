@@ -78,6 +78,7 @@ GetOptions(
 
         foreach my $plugin (@munin_plugins) {
             &DEBUG("$munin_run_command $plugin");
+            my $time    = time();
             my @results = `$munin_run_command $plugin`;
             if ( $? == 0 ) {
 
@@ -87,7 +88,7 @@ GetOptions(
                     &DEBUG("munin  $line");
                     my ( $munin_key,  $value ) = split( /\s/, $line );
                     my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
-                    print FN "- munin[$plugin,$zabbix_key] $value\n";
+                    print FN "- munin[$plugin,$zabbix_key] $time $value\n";
                 }
             }
             else {
