@@ -66,18 +66,15 @@ GetOptions(
         push( @munin_plugins, $called_plugin );
     }
 
-    foreach my $plugin (@munin_plugins) {
+    if ($DO_OPERATION) {
+        my $temp_file = "$lockdir/munin.dat";
+        unless ( open( FN, "> $temp_file" ) ) {
+            print STDERR "failed open a file($lockdir/munin.dat)\n";
+        }
+        flock( FN, 2 );
 
-        &DEBUG("$munin_run_command $plugin");
-
-        if ($DO_OPERATION) {
-            my $temp_file = "$lockdir/$plugin";
-            unless ( open( FN, "> $temp_file" ) ) {
-                print STDERR "failed open a file($lockdir/$plugin)\n";
-                next;
-            }
-            flock( FN, 2 );
-
+        foreach my $plugin (@munin_plugins) {
+            &DEBUG("$munin_run_command $plugin");
             my @results = `$munin_run_command $plugin`;
             if ( $? == 0 ) {
 
@@ -89,22 +86,22 @@ GetOptions(
                     my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
                     print FN "- munin[$plugin,$zabbix_key] $value\n";
                 }
-                close(FN);
-                my $result
-                    = `$zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/$plugin`;
-                &DEBUG("result $result");
-                unlink($temp_file);
             }
             else {
                 # fail..
                 &DEBUG("Failed to $munin_run_command $plugin");
             }
         }
-        else {
-            &DEBUG(
-                "EXEC $zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/$plugin"
-            );
-        }
+        my $result
+            = `$zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/munin.dat`;
+        close(FN);
+        &DEBUG("result $result");
+        unlink($temp_file);
+    }
+    else {
+        &DEBUG(
+            "EXEC $zabbix_sender_command -c $zabbix_agentd_conf -i $lockdir/munin.dat"
+        );
     }
     &do_unlock() if $DO_OPERATION;
     exit;
