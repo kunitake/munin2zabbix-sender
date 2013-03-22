@@ -6,6 +6,10 @@ NAME
 
         munin2zabbix-sender.pl - This script can send data from munin plugins to zabbix via zabbix_sender.
 
+Version
+----------------
+        0.04
+
 SYNOPSIS
 ---------------
        munin2zabbix-sender.pl [options]
