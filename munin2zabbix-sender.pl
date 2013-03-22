@@ -9,6 +9,7 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+               'version 0.04         2013/03/22',
                'version 0.03 beta    2013/03/22',
                'version 0.02 beta    2013/03/15',
                'version 0.01 alpha   2013/03/15',
@@ -66,7 +67,7 @@ GetOptions(
         @munin_plugins = `ls $munin_plugins_dir`;
     }
     else {
-        push( @munin_plugins, $called_plugin );
+        @munin_plugins = split( /,|:|/, $called_plugin );
     }
 
     if ($DO_OPERATION) {
@@ -205,7 +206,14 @@ munin2zabbix-sender.pl [options]
     [-a|--all]           Call all available munin-node plugins.
 
  Examples:
+    Call one plugin.
     # munin2zabbix-sender.pl -p mysql_select_types
+
+    Call multiple plugins.
+    # munin2zabbix-sender.pl -p mysql_select_types,memory
+    # munin2zabbix-sender.pl -p mysql_select_types:memory
+
+    Call all available munin-node plugins
     # munin2zabbix-sender.pl -a
 
  See Also:
