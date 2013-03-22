@@ -7,25 +7,34 @@ use Getopt::Long;
 use Pod::Usage 'pod2usage';
 
 ######################################################################
-# DO NOT EDIT following lines
-my $version = [
-               'version 0.03 beta    2013/03/22',
-               'version 0.02 beta    2013/03/15',
-               'version 0.01 alpha   2013/03/15',
-               ];
-
-my $DO_OPERATION = 1;
-
-my $temp_dir = '/tmp/munin2zabbix-sender';
-
-my $lockdir  = "$temp_dir/lock1";
-my $lockdir2 = "$temp_dir/locl2";
+# EDIT following lines as you like.
 
 # Path of Command and plugins dir.
 my $munin_run_command = '/usr/sbin/munin-run';
 my $munin_plugins_dir = '/etc/munin/plugins';
 my $zabbix_sender_command = '/usr/bin/zabbix_sender';
 my $zabbix_agentd_conf    = '/etc/zabbix/zabbix_agentd.conf';
+
+my $temp_dir = '/tmp/munin2zabbix-sender';
+
+######################################################################
+# DO NOT EDIT following lines
+my $version = [
+               'version 0.02 beta    2013/03/15',
+               'version 0.01 alpha   2013/03/15',
+               ];
+
+my $DO_OPERATION = 1;
+
+# This directory includes lock dir and temp data file for zabbix_sender.
+if (! -d $temp_dir) {
+  mkdir($temp_dir, 0755);
+}
+
+######################################################################
+my $lockdir  = "$temp_dir/lock1";
+my $lockdir2 = "$temp_dir/locl2";
+
 
 ######################################################################
 my ($dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins);
