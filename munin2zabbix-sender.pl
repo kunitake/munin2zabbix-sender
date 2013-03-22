@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-
+use Pod::Usage 'pod2usage';
 
 ######################################################################
 # DO NOT EDIT following lines
@@ -50,7 +50,7 @@ GetOptions(
         exit;
     }
     if ( $help || ( !$called_plugin && !$all_plugins ) ) {
-        die &usage();
+        pod2usage(1);
     }
     if ($dryrun) {
         $DO_OPERATION = 0;
@@ -137,16 +137,6 @@ sub do_unlock {
     rmdir($lockdir);
 }
 
-sub usage {
-    print STDERR "munin2zabbix-sender $version->[0]\n";
-    print STDERR "\n";
-    print STDERR "\t[-d|--dryrun] DO NOTHING\n";
-    print STDERR "\t[-s|--selfcheck] Check this environment for working.\n";
-    print STDERR "\t[-p|--plugin] <name of munin plugin>\n";
-    print STDERR "\t[-h|--help] Print this message\n";
-    print STDERR "\t[-v|--verbose] Print verbose messages\n\n";
-}
-
 sub do_selfcheck {
     print "\n";
     print "Check path of commands and munin-plugin's directory...\n";
@@ -192,3 +182,44 @@ sub error {
     print STDERR "error: $message\n";
     exit;
 }
+
+1;
+
+__END__
+
+=head1 NAME
+
+ munin2zabbix-sender.pl - This script can send data from munin plugins to zabbix via zabbix_sender.
+
+=head1 SYNOPSIS
+
+munin2zabbix-sender.pl [options]
+
+ Options
+    [-d|--dryrun]        DO NOTHING.
+    [-s|--selfcheck]     Check this environment for working.
+    [-p|--plugin]        <name of munin plugin>
+    [-h|--help]          Print this message.
+    [-v|--verbose]       Print verbose messages.
+    [-a|--all]           Call all available munin-node plugins.
+
+ Examples:
+    # munin2zabbix-sender.pl -p mysql_select_types
+    # munin2zabbix-sender.pl -a
+
+ See Also:
+    perldoc munin2zabbix-sender.pl
+
+=head1 DESCRIPTION
+
+ This script can send data from munin plugins to zabbix via zabbix_sender.
+
+=head1 SEE ALSO
+
+https://github.com/kunitake/munin2zabbix-sender/README.md
+
+=head1 AUTHOR
+
+KUNITAKE Koichi <koichi@kunitake.org>
+
+=cut
