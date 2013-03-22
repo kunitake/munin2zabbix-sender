@@ -67,7 +67,7 @@ GetOptions(
         @munin_plugins = `ls $munin_plugins_dir`;
     }
     else {
-        @munin_plugins = split( /,|:|/, $called_plugin );
+        @munin_plugins = split( /,|:/, $called_plugin );
     }
 
     if ($DO_OPERATION) {
