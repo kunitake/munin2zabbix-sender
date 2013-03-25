@@ -21,6 +21,7 @@ SYNOPSIS
            [-h|--help]          Print this message.
            [-v|--verbose]       Print verbose messages.
            [-a|--all]           Call all available munin-node plugins.
+           [-i|--ignore]        Ignore munin-node plugins with "--all" option.
 
         Examples:
            Call one plugin.
@@ -33,6 +34,9 @@ SYNOPSIS
            Call all available munin-node plugins
            # munin2zabbix-sender.pl -a
 
+           Call all available munin-node plugins without some plugins.
+           # munin2zabbix-sender.pl -a -i cpu,if_
+
         See Also:
            perldoc munin2zabbix-sender.pl
 
@@ -43,3 +47,8 @@ DESCRIPTION
 SEE ALSO
 ---------------
        https://github.com/kunitake/munin2zabbix-sender/README.md
+
+Unsupported munin plugins
+-------------------------------
+* yum
+* diskstats 
