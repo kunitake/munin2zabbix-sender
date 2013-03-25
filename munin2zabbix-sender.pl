@@ -9,11 +9,14 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
-               'version 0.04         2013/03/22',
-               'version 0.03 beta    2013/03/22',
-               'version 0.02 beta    2013/03/15',
-               'version 0.01 alpha   2013/03/15',
-               ];
+    'version 0.05         2013/03/25',
+    'version 0.04         2013/03/22',
+    'version 0.03 beta    2013/03/22',
+    'version 0.02 beta    2013/03/15',
+    'version 0.01 alpha   2013/03/15',
+];
+
+$ENV{'PATH'} = '/usr/sbin:/bin:/usr/bin';
 
 my $DO_OPERATION = 1;
 
@@ -22,23 +25,30 @@ my $temp_dir = '/tmp/munin2zabbix-sender';
 my $lockdir  = "$temp_dir/lock1";
 my $lockdir2 = "$temp_dir/locl2";
 
+my @unsupported_plugins = ( 'diskstats', 'yum' );
+
+######################################################################
+# DO EDIT following lines as you like
+
 # Path of Command and plugins dir.
-my $munin_run_command = '/usr/sbin/munin-run';
-my $munin_plugins_dir = '/etc/munin/plugins';
+my $munin_run_command     = '/usr/sbin/munin-run';
+my $munin_plugins_dir     = '/etc/munin/plugins';
 my $zabbix_sender_command = '/usr/bin/zabbix_sender';
 my $zabbix_agentd_conf    = '/etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
-my ($dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins);
+my ( $dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins,
+    $ignored_plugin );
 
 GetOptions(
-    'dryrun' => \$dryrun,
+    'dryrun'    => \$dryrun,
     'selfcheck' => \$selfcheck,
-    'help' => \$help,
-    'verbose' => \$verbose,
-    'plugin=s' => \$called_plugin,
-    'all' => \$all_plugins,
-    );
+    'help'      => \$help,
+    'verbose'   => \$verbose,
+    'plugin=s'  => \$called_plugin,
+    'ignore=s'  => \$ignored_plugin,
+    'all'       => \$all_plugins,
+);
 
 {
     # Main Routine
@@ -47,6 +57,9 @@ GetOptions(
         exit;
     }
     if ( $help || ( !$called_plugin && !$all_plugins ) ) {
+        pod2usage(1);
+    }
+    if ( $ignored_plugin && !$all_plugins ) {
         pod2usage(1);
     }
     if ($dryrun) {
@@ -62,9 +75,22 @@ GetOptions(
         &do_lock();
     }
 
-    my @munin_plugins;
+    my ( @munin_plugins, @ignored_plugins );
+    if ($ignored_plugin) {
+        @ignored_plugins = split( /,|:/, $ignored_plugin );
+    }
+    push( @ignored_plugins, @unsupported_plugins );
+    my $ignored_list = join( "|^", @ignored_plugins );
+
     if ($all_plugins) {
-        @munin_plugins = `ls $munin_plugins_dir`;
+        if ($ignored_list) {
+            @munin_plugins
+                = `ls $munin_plugins_dir | egrep -v "^$ignored_list"`;
+        }
+        else {
+            @munin_plugins = `ls $munin_plugins_dir`;
+        }
+        &DEBUG("ignored:list $ignored_list");
     }
     else {
         @munin_plugins = split( /,|:/, $called_plugin );
@@ -78,9 +104,10 @@ GetOptions(
         flock( FN, 2 );
 
         foreach my $plugin (@munin_plugins) {
+            chomp($plugin);
             &DEBUG("$munin_run_command $plugin");
             my $time    = time();
-            my @results = `$munin_run_command $plugin`;
+            my @results = `$munin_run_command $plugin 2> /dev/null`;
             if ( $? == 0 ) {
 
                 # success
@@ -89,6 +116,7 @@ GetOptions(
                     &DEBUG("munin  $line");
                     my ( $munin_key,  $value ) = split( /\s/, $line );
                     my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
+                    $value = 0 if !$value;
                     print FN "- munin[$plugin,$zabbix_key] $time $value\n";
                 }
             }
@@ -204,6 +232,7 @@ munin2zabbix-sender.pl [options]
     [-h|--help]          Print this message.
     [-v|--verbose]       Print verbose messages.
     [-a|--all]           Call all available munin-node plugins.
+    [-i|--ignore]        Ignore munin-node plugins with "--all" option.
 
  Examples:
     Call one plugin.
@@ -215,6 +244,10 @@ munin2zabbix-sender.pl [options]
 
     Call all available munin-node plugins
     # munin2zabbix-sender.pl -a
+
+    Call all available munin-node plugins without some plugins.
+    # munin2zabbix-sender.pl -a -i cpu,if_
+
 
  See Also:
     perldoc munin2zabbix-sender.pl
