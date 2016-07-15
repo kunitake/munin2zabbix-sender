@@ -9,6 +9,7 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+    'version 0.06         2016/07/15',
     'version 0.05         2013/03/25',
     'version 0.04         2013/03/22',
     'version 0.03 beta    2013/03/22',
