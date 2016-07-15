@@ -9,6 +9,7 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+    'version 0.06         2016/07/15',
     'version 0.05         2013/03/25',
     'version 0.04         2013/03/22',
     'version 0.03 beta    2013/03/22',
@@ -38,7 +39,7 @@ my $zabbix_agentd_conf    = '/etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
 my ( $dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins,
-    $ignored_plugin );
+    $ignored_plugin, $cdef);
 
 GetOptions(
     'dryrun'    => \$dryrun,
@@ -47,6 +48,7 @@ GetOptions(
     'verbose'   => \$verbose,
     'plugin=s'  => \$called_plugin,
     'ignore=s'  => \$ignored_plugin,
+    'cdef'      => \$cdef,
     'all'       => \$all_plugins,
 );
 
@@ -107,6 +109,24 @@ GetOptions(
             chomp($plugin);
             &DEBUG("$munin_run_command $plugin");
             my $time    = time();
+
+            # get CDEF
+            my @munin_configs = `$munin_run_command $plugin config` if $cdef;
+            my %munin_item   = ();
+            if ($cdef) {
+                foreach my $line (@munin_configs) {
+                    my ( $key, @data ) = split( /\s/, $line );
+
+                    if ($key =~ /.cdef$/) {
+                        my ($item, $number, $operation) = split(/,/, $data[0]);
+                        $munin_item{$item}{'number'} = $number if ($number =~ /^[0-9]+$/);
+                        $munin_item{$item}{'operation'} = $operation if ($operation =~ /^[\*\/\+\-]$/);
+                        &DEBUG("CDEF : $item,$number,$operation");
+                    }
+               }
+            }
+
+            # Get values by munin_run
             my @results = `$munin_run_command $plugin 2> /dev/null`;
             if ( $? == 0 ) {
 
@@ -117,6 +137,13 @@ GetOptions(
                     my ( $munin_key,  $value ) = split( /\s/, $line );
                     my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
                     $value = 0 if !$value;
+                    if ( (defined $munin_item{$zabbix_key}{'number'}) && (defined $munin_item{$zabbix_key}{'operation'})) {
+                        &DEBUG("BEFORE : $zabbix_key $value");
+                        my $exp = '$value = ' . "$value"  . $munin_item{$zabbix_key}{'operation'} . $munin_item{$zabbix_key}{'number'};
+			eval($exp) if $cdef;
+                        &DEBUG("ADJUST : $zabbix_key $value");
+                    }
+                    &DEBUG("- munin[$plugin,$zabbix_key] $time $value");
                     print FN "- munin[$plugin,$zabbix_key] $time $value\n";
                 }
             }
@@ -233,6 +260,7 @@ munin2zabbix-sender.pl [options]
     [-v|--verbose]       Print verbose messages.
     [-a|--all]           Call all available munin-node plugins.
     [-i|--ignore]        Ignore munin-node plugins with "--all" option.
+    [-c|--cdef]          Adjust values by CDEF from munin-run config.
 
  Examples:
     Call one plugin.

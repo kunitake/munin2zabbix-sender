@@ -8,7 +8,7 @@ NAME
 
 Version
 ----------------
-        0.05
+        0.06
 
 SYNOPSIS
 ---------------
@@ -21,6 +21,7 @@ SYNOPSIS
            [-h|--help]          Print this message.
            [-v|--verbose]       Print verbose messages.
            [-a|--all]           Call all available munin-node plugins.
+           [-c|--cdef]          Adjust values by CDEF from munin-run config.
            [-i|--ignore]        Ignore munin-node plugins with "--all" option.
 
         Examples:
