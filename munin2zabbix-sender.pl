@@ -9,6 +9,7 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+    'version 0.07         2016/07/19',
     'version 0.06         2016/07/15',
     'version 0.05         2013/03/25',
     'version 0.04         2013/03/22',
@@ -39,7 +40,7 @@ my $zabbix_agentd_conf    = '/etc/zabbix/zabbix_agentd.conf';
 
 ######################################################################
 my ( $dryrun, $help, $selfcheck, $called_plugin, $verbose, $all_plugins,
-    $ignored_plugin, $cdef);
+    $ignored_plugin, $cdef );
 
 GetOptions(
     'dryrun'    => \$dryrun,
@@ -107,26 +108,29 @@ GetOptions(
 
         foreach my $plugin (@munin_plugins) {
             chomp($plugin);
-            &DEBUG("$munin_run_command $plugin");
-            my $time    = time();
 
             # get CDEF
-            my @munin_configs = `$munin_run_command $plugin config` if $cdef;
-            my %munin_item   = ();
+            my %munin_item = ();
             if ($cdef) {
+                &DEBUG("$munin_run_command $plugin config");
+                my @munin_configs = `$munin_run_command $plugin config`;
+
                 foreach my $line (@munin_configs) {
                     my ( $key, @data ) = split( /\s/, $line );
 
-                    if ($key =~ /.cdef$/) {
-                        my ($item, $number, $operation) = split(/,/, $data[0]);
-                        $munin_item{$item}{'number'} = $number if ($number =~ /^[0-9]+$/);
-                        $munin_item{$item}{'operation'} = $operation if ($operation =~ /^[\*\/\+\-]$/);
-                        &DEBUG("CDEF : $item,$number,$operation");
+                    if ( $key =~ /\.cdef$/ ) {
+                        my ( $item, undef ) = split( /\./, $key );
+                        $munin_item{$item}{'cdef'} = $data[0];
+                        &DEBUG("CDEF:$item: $data[0]");
                     }
-               }
+                }
             }
 
             # Get values by munin_run
+            my $time = time();
+            my @zabbix_send_key;
+
+            &DEBUG("$munin_run_command $plugin");
             my @results = `$munin_run_command $plugin 2> /dev/null`;
             if ( $? == 0 ) {
 
@@ -136,15 +140,54 @@ GetOptions(
                     &DEBUG("munin  $line");
                     my ( $munin_key,  $value ) = split( /\s/, $line );
                     my ( $zabbix_key, $dummy ) = split( /\./, $munin_key );
+                    push( @zabbix_send_key, $zabbix_key );
                     $value = 0 if !$value;
-                    if ( (defined $munin_item{$zabbix_key}{'number'}) && (defined $munin_item{$zabbix_key}{'operation'})) {
-                        &DEBUG("BEFORE : $zabbix_key $value");
-                        my $exp = '$value = ' . "$value"  . $munin_item{$zabbix_key}{'operation'} . $munin_item{$zabbix_key}{'number'};
-			eval($exp) if $cdef;
-                        &DEBUG("ADJUST : $zabbix_key $value");
+                    $munin_item{$zabbix_key}{'value'} = $value;
+                    $munin_item{$zabbix_key}{'time'}  = $time;
+                    &DEBUG(
+                        "munin[$plugin,$zabbix_key] $value(BEFORE ACCORDING TO CDEF)"
+                    );
+
+                    if ( defined $munin_item{$zabbix_key}{'cdef'} ) {
+                        my @cdef
+                            = split( /,/, $munin_item{$zabbix_key}{'cdef'} );
+                        my @stack;
+                        foreach my $calc (@cdef) {
+                            if ( $calc =~ /^[\*\/\+\-]$/ ) {
+                                my $pop1 = pop(@stack);
+                                my $pop2 = pop(@stack);
+                                my ( $pop1_value, $pop2_value );
+                                if ( $pop1 =~ /^[0-9]+$/ ) {
+                                    $pop1_value = $pop1;
+                                }
+                                else {
+                                    $pop1_value = $munin_item{$pop1}{'value'};
+                                }
+                                $pop2_value = $munin_item{$pop2}{'value'};
+
+                                my $exp
+                                    = '$pop2_value = '
+                                    . "$pop2_value"
+                                    . $calc
+                                    . "$pop1_value";
+                                eval($exp);
+                                $munin_item{$pop2}{'value'} = $pop2_value;
+                                &DEBUG("ADJUST: $pop2 $pop2_value");
+                                push( @stack, $pop2 );
+                            }
+                            else {
+                                push( @stack, $calc );
+                            }
+
+                        }
                     }
-                    &DEBUG("- munin[$plugin,$zabbix_key] $time $value");
-                    print FN "- munin[$plugin,$zabbix_key] $time $value\n";
+                }
+                foreach my $key (@zabbix_send_key) {
+                    &DEBUG(
+                        "- munin[$plugin,$key] $time $munin_item{$key}{'value'}"
+                    );
+                    print FN
+                        "- munin[$plugin,$key] $time $munin_item{$key}{'value'}\n";
                 }
             }
             else {
@@ -152,6 +195,7 @@ GetOptions(
                 &DEBUG("Failed to $munin_run_command $plugin");
             }
         }
+
         my $result
             = `$zabbix_sender_command -T -c $zabbix_agentd_conf -i $lockdir/munin.dat`;
         close(FN);
