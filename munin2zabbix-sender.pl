@@ -9,6 +9,7 @@ use Pod::Usage 'pod2usage';
 ######################################################################
 # DO NOT EDIT following lines
 my $version = [
+    'version 0.08         2016/07/19',
     'version 0.07         2016/07/19',
     'version 0.06         2016/07/15',
     'version 0.05         2013/03/25',
@@ -307,17 +308,20 @@ munin2zabbix-sender.pl [options]
     [-c|--cdef]          Adjust values by CDEF from munin-run config.
 
  Examples:
-    Call one plugin.
+    Call one plugin (forward match in plugin name).
     # munin2zabbix-sender.pl -p mysql_select_types
 
-    Call multiple plugins.
+    Call multiple plugins (forward match in plugin name).
     # munin2zabbix-sender.pl -p mysql_select_types,memory
     # munin2zabbix-sender.pl -p mysql_select_types:memory
 
-    Call all available munin-node plugins
+    Call all available munin-node plugins.
     # munin2zabbix-sender.pl -a
 
-    Call all available munin-node plugins without some plugins.
+    Call all available munin-node plugins and adjust values according to CDEF.
+    # munin2zabbix-sender.pl -a -c
+
+    Call all available munin-node plugins without some plugins (forward match in plugin name).
     # munin2zabbix-sender.pl -a -i cpu,if_
 
 
