@@ -8,7 +8,7 @@ NAME
 
 Version
 ----------------
-        0.07
+        0.08
 
 SYNOPSIS
 ---------------
@@ -25,17 +25,20 @@ SYNOPSIS
            [-i|--ignore]        Ignore munin-node plugins with "--all" option.
 
         Examples:
-           Call one plugin.
+           Call one plugin (forward match in plugin name).
            # munin2zabbix-sender.pl -p mysql_select_types
 
-           Call multiple plugins.
+           Call multiple plugins (forward match in plugin name).
            # munin2zabbix-sender.pl -p mysql_select_types,memory
            # munin2zabbix-sender.pl -p mysql_select_types:memory
 
-           Call all available munin-node plugins
+           Call all available munin-node plugins.
            # munin2zabbix-sender.pl -a
 
-           Call all available munin-node plugins without some plugins.
+           Call all available munin-node plugins and adjust values according to CDEF.
+           # munin2zabbix-sender.pl -a -c
+
+           Call all available munin-node plugins without some plugins (forward match in plugin name).
            # munin2zabbix-sender.pl -a -i cpu,if_
 
         See Also:
